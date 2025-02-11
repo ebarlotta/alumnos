@@ -5,7 +5,7 @@ use CodeIgniter\Config\BaseConfig;
 class App extends BaseConfig
 {
 
-	public $baseURL = 'http://localhost/alumnos/public/';
+	public $baseURL = 'http://localhost/alumnos1/public/';
 	public $indexPage = 'index.php';
 	public $uriProtocol = 'REQUEST_URI';
 	public $defaultLocale = 'es';

@@ -19,7 +19,7 @@ class personas extends BaseController
 
     public function index()
     {
-
+echo "entro;";
     }
 
     // Editar datos personales por parte del usuario

@@ -39,23 +39,25 @@
                             </tbody>
                         </table>
                     </div>
-
-                    
-                    <select name="" id="" class="form-control" hx-get="<?php echo base_url(); ?>/alumnos/listado" hx-target="#listado" hx-trigger="change">
+                <div class="col-12">
+                    <select name="" id="" class="form-control col-6" hx-get="<?php echo base_url(); ?>/alumnos/listado" hx-target="#listado" hx-trigger="change">
                         <option value="">Opcion 1</option>
                         <option value="">Opcion 2</option>
                         <option value="">Opcion 3</option>
                     </select>
-                    <div id="listado" style="background-color: lightgreen;">
+                    <div class="col-6" id="listado" style="background-color: lightgreen;">
                         Listado Vacio
                     </div>
-                    <div id="listadoNuevo" style="background-color: lightseagreen;">
-                        Listado Vacio
+                </div>
+                <div class="col-12">
+                    <div class="col-6" id="listadoNuevo" style="background-color: lightseagreen;">
+                        Listado Vacio 2
                     </div>
-                    <button hx-get="<?php echo base_url(); ?>/alumnos/listado" hx-target="#contenido">Cargar más contenido + </button>
+
+                    <!-- <button hx-get="<?php echo base_url(); ?>/alumnos/listado" hx-target="#contenido">Cargar más contenido + </button>
                     <div id="contenido" style="background-color: lightcoral;">
                         contenido
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

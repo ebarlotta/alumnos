@@ -21,14 +21,7 @@ class home extends BaseController
 		if(!isset($this->session->user_id)) {return redirect()->to(base_url());}
 		
 		$persona=$this->personas->where('user_email', $this->session->user_email)->first();
-		
-		// Revisamos si es alumno de algun IES
-		$alumno=$this->alumnos
-		->join('institutos', 'institutos.id = gestion_alumnos.id_instituto')
-		->where('id_persona',$this->session->user_id)
-		->findAll();
-
-        $data=['vDATOS' => $persona, 'vALUMNO' => $alumno];
+        $data=['vDATOS' => $persona];
 
 		echo view('header');
 		echo view('home',$data);

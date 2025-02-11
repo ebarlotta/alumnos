@@ -3,7 +3,6 @@
 Use App\Models\PersonasModel;
 Use App\Models\InstitutosModel;
 Use App\Models\CarrerasModel;
-Use App\Models\MateriasModel;
 use App\Models\SettingsModel;
 
 Use App\Models\Gestion_InscripcionesModel;
@@ -12,14 +11,12 @@ Use App\Models\Gestion_CarrerasModel;
 Use App\Models\Gestion_MesasModel;
 Use App\Models\Gestion_ExamenesModel;
 use App\Models\Gestion_MateriasModel;
-use App\Models\Gestion_ProfesoresModel;
 
 class alumnos extends BaseController
 {
 	protected $session, $settings,
     $personas, $institutos, $carreras, 
     $gestion_inscripciones, $gestion_materias, $gestion_alumnos, $gestion_carreras, $gestion_examenes, $gestion_mesas;
-    protected $materia, $gestion_profesores;
 	
 	public function __construct()
 	{
@@ -36,8 +33,6 @@ class alumnos extends BaseController
 		$this->gestion_carreras = new Gestion_CarrerasModel();
         $this->gestion_mesas = new Gestion_MesasModel();
         $this->gestion_examenes = new Gestion_ExamenesModel();
-        $this->materia = new MateriasModel();
-        $this->gestion_profesores = new Gestion_ProfesoresModel();
 	}
 
     // Inscripciones a Carreras
@@ -75,17 +70,13 @@ class alumnos extends BaseController
 
         if ($abierta['inscripciones'] == 'SI'){
 
-            // Institutos y Carreras Asignadas
-            $carreras=$this->gestion_carreras
-            ->select('gestion_carreras.*, institutos.numero, carreras.nombre, carreras.resolucion')
-            ->where('estado','ACTIVO')
-            ->where('nueva_cohorte','SI')
-            ->join('institutos', 'institutos.id = gestion_carreras.id_instituto')
-            ->join('carreras', 'carreras.id = gestion_carreras.id_carrera')
+            // Listado de Institutos
+            $vIES=$this->institutos
+            ->where('dependencia','DES')
             ->orderBy('institutos.numero','asc')
             ->findAll();
 
-            $data=['vTITULO' => 'Nueva Inscripción a Carrera', 'vCARRERAS' => $carreras];
+            $data=['vTITULO' => 'Nueva Inscripción a Cursado', 'vIES' => $vIES];
 
             echo view('header');
             echo view('alumnos/nueva_inscripcion',$data);
@@ -96,6 +87,44 @@ class alumnos extends BaseController
             echo view('acceso');
             echo view('footer');
         }
+    }
+
+    // Obtenemos Carreras
+    public function carreras_json()
+    {
+        $resultado=$this->gestion_carreras
+        //->select('gestion_carreras.*, carreras.*')
+        ->join('carreras', 'carreras.id = gestion_carreras.id_carrera')
+        ->where('gestion_carreras.id_instituto',$this->request->getPost('buscar'))
+        ->where('gestion_carreras.estado','ACTIVO')
+        ->orderBy('carreras.nombre','asc')
+        ->findAll();
+        
+        echo json_encode($resultado);
+    }
+
+    // Obtenemos cantidad de Años
+    public function anos_json()
+    {
+        $resultado=$this->gestion_materias
+        ->where('carrera',$this->request->getPost('buscar'))
+        ->groupBy('ano')
+        ->orderBy('ano','asc')
+        ->findAll();
+    
+        echo json_encode($resultado);
+    }
+
+    // Obtenemos Materias del Año Seleccionado
+    public function materias_json()
+    {       
+        $resultado=$this->gestion_materias
+        ->where('carrera',$this->request->getPost('buscarCarrera'))
+        ->where('ano',$this->request->getPost('buscarAno'))
+        //->orderBy('id','asc')
+        ->findAll();
+    
+        echo json_encode($resultado);
     }
 
     // Guardar Nueva Inscripcion
@@ -194,12 +223,7 @@ class alumnos extends BaseController
         if(!isset($this->session->user_id)) {return redirect()->to(base_url());}
         $carrera=$this->carreras->where('id',$id)->first();
 
-        $datos=$this->gestion_materias->select('gestion_materias.*')
-        //->where('id_persona',$this->session->user_id)
-        ->where('gestion_materias.carrera',$id)
-        //->join('gestion_mesas', 'gestion_mesas.id = gestion_examenes.id_mesa')
-        //->join('materias', 'materias.id = gestion_mesas.id_materia')
-        ->findAll();
+        $datos=$this->gestion_materias->where('carrera',$id)->findAll();
         $data=['vTITULO' => 'Materias de la Carrera', 'vDATOS' => $datos, 'vCARRERA' => $carrera];
 
         echo view('header');
@@ -207,58 +231,33 @@ class alumnos extends BaseController
         echo view('footer');
     }
 
-    public function informacion_materias($id)
+    // Nueva Inscripcion a Mesas
+    public function inscripcion_mesas()
     {
         if(!isset($this->session->user_id)) {return redirect()->to(base_url());}
-        
-        $materia=$this->materia->where('id',$id)->first();
+        $abierta=$this->settings->where('id',1)->first();
 
-        // Arreglar 
-        $registro=$this->gestion_materias->select('carreras.nombre, materias.nombre as nombre_materia')
-        ->where('gestion_materias.id',$id)
-        ->join('carreras', 'carreras.id = gestion_materias.carrera')
-        ->join('materias', 'materias.id = gestion_materias.id')
-        ->first();
-        // dd($registro);
-        
-        // $carrera=$this->carreras->where('id',$id)->first();
-        
-        $datos=$this->gestion_profesores->select('gestion_profesores.*, personas.user_apellido, personas.user_nombres, institutos.numero, institutos.nombre as nombre_instituto, materias.ano, materias.regimen, materias.cuatrimestre, materias.formato')
-        ->where('gestion_profesores.id_materia',$id)
-        ->join('personas', 'personas.id = gestion_profesores.id_persona')
-        ->join('institutos', 'institutos.id = gestion_profesores.id_instituto')
-        ->join('materias','materias.id = gestion_profesores.id_materia')
-        ->findAll();
-        
-        // dd($datos);
+        if ($abierta['mesas'] == 'SI'){
 
-        $data=['vTITULO' =>$registro['nombre_materia'], 'vDATOS' => $datos, 'vCARRERA' =>$registro['nombre']];
+        // Inscripciones ACTIVAS del Alumno
+		$inscripciones=$this->gestion_alumnos
+        ->select('gestion_alumnos.*, institutos.numero, carreras.nombre, carreras.resolucion')
+		->where('id_persona', $this->session->user_id)
+		->join('institutos', 'institutos.id = gestion_alumnos.id_instituto')
+		->join('carreras', 'carreras.id = gestion_alumnos.id_carrera')
+		->findAll();
 
-        echo view('header');
-        echo view('alumnos/informacion_materias',$data);
-        echo view('footer');
+            $data=['vTITULO' => 'Nueva Inscripción a Carrera', 'vCARRERAS' => $carreras];
+
+            echo view('header');
+            echo view('alumnos/nueva_inscripcion',$data);
+            echo view('footer');
+
+        } else {
+            echo view('header');
+            echo view('acceso');
+            echo view('footer');
+        }
     }
 
-    public function listado() {
-        // dd('entro');
-        $html = '<select name="" id="" class="form-control" hx-get="'. base_url() . '/alumnos/listado2" hx-target="#listadoNuevo" hx-trigger="change">
-                        <option value="">Opcion 11</option>
-                        <option value="">Opcion 21</option>
-                        <option value="">Opcion 31</option>
-                    </select>';
-
-        return $html;
-    }
-
-    public function listado2() {
-        // dd('entro');
-        $html = '<select name="" id="" class="form-control" hx-get="'. base_url() . '>/alumnos/listado3" hx-target="#listadoNuevo" hx-trigger="change">
-                        <option value="">Opcion 11</option>
-                        <option value="">Opcion 21</option>
-                        <option value="">Opcion 31</option>
-                    </select>';
-
-        return '<script>alert("prueba");</script>';
-        return $html;
-    }
 }
